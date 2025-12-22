@@ -1,7 +1,7 @@
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { AuthButtons } from "@/components/auth-buttons";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -11,29 +11,20 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-8 text-center">
-        <div className="space-y-4">
-          <h1 className="text-6xl font-bold tracking-tight text-foreground">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-6xl font-bold tracking-tight">
             FlashyCardy
-          </h1>
-          <p className="text-xl text-muted-foreground">
+          </CardTitle>
+          <CardDescription className="text-xl">
             Your personal flashcard platform
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <SignInButton mode="modal">
-            <Button size="lg" variant="default">
-              Sign In
-            </Button>
-          </SignInButton>
-          <SignUpButton mode="modal">
-            <Button size="lg" variant="outline">
-              Sign Up
-            </Button>
-          </SignUpButton>
-        </div>
-      </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <AuthButtons />
+        </CardContent>
+      </Card>
     </div>
   );
 }

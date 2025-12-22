@@ -3,7 +3,49 @@ alwaysApply: true
 ---
 # shadcn/ui Usage Guidelines
 
-This project uses **shadcn/ui** for all UI elements and components.
+## 🚨 CRITICAL REQUIREMENT - READ THIS FIRST 🚨
+
+**THIS PROJECT USES EXCLUSIVELY shadcn/ui COMPONENTS FOR ALL UI ELEMENTS.**
+
+### ⛔ ABSOLUTE RULES - ZERO EXCEPTIONS ALLOWED ⛔
+
+1. **ABSOLUTELY NO CUSTOM UI COMPONENTS** - Do not create any custom buttons, inputs, cards, dialogs, or any other UI elements
+2. **ONLY USE shadcn/ui** - Every single UI element must come from the shadcn/ui component library
+3. **NO RAW HTML UI ELEMENTS** - Do not use raw `<button>`, `<input>`, `<dialog>`, etc. Always use shadcn/ui components
+4. **NO CUSTOM STYLING ON BASE ELEMENTS** - Style only through shadcn/ui component variants and Tailwind utilities
+5. **NO EXCEPTIONS FOR "SIMPLE" COMPONENTS** - Even the simplest button or div with styling must use shadcn/ui
+
+**IF A COMPONENT YOU NEED DOESN'T EXIST:** Add it using `npx shadcn@latest add [component-name]`
+
+## 🚫 FORBIDDEN PATTERNS - NEVER DO THESE
+
+### ❌ WRONG - Custom UI Components:
+```tsx
+// FORBIDDEN - Do not create custom UI
+const CustomButton = ({ children }) => (
+  <button className="px-4 py-2 bg-blue-500">{children}</button>
+)
+```
+
+### ❌ WRONG - Raw HTML Elements:
+```tsx
+// FORBIDDEN - Do not use raw HTML for UI
+<button className="px-4 py-2">Click Me</button>
+<input type="text" className="border rounded" />
+<div className="border rounded p-4">Card content</div>
+```
+
+### ✅ CORRECT - shadcn/ui Components:
+```tsx
+// CORRECT - Always use shadcn/ui
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+
+<Button>Click Me</Button>
+<Input type="text" />
+<Card>Card content</Card>
+```
 
 ## Component Library
 
@@ -37,18 +79,111 @@ npx shadcn@latest add [component-name]
 
 ## Component Usage
 
-- All UI components should be imported from `@/components/ui/[component-name]`
+- All UI components **MUST** be imported from `@/components/ui/[component-name]`
 - The utility function `cn()` from [lib/utils.ts](mdc:lib/utils.ts) should be used for conditional styling
 - Theme colors are defined in [app/globals.css](mdc:app/globals.css) using CSS variables
 - Components support light and dark modes automatically
 
+## 🔐 Clerk Authentication Integration
+
+**⚠️ MANDATORY APPROACH FOR CLERK - NO OTHER PATTERN ALLOWED ⚠️**
+
+### 🚫 NEVER Use Clerk's Default Buttons
+
+- **ABSOLUTELY FORBIDDEN**: Clerk's `<SignInButton>` or `<SignUpButton>` components
+- **ABSOLUTELY FORBIDDEN**: Any custom button components for auth
+- **REQUIRED**: shadcn/ui `Button` component ONLY for all authentication triggers
+- Import: `import { Button } from "@/components/ui/button"`
+
+### ✅ REQUIRED: Modal/Dialog Pattern
+
+- **MANDATORY**: Use shadcn/ui `Dialog` component for Clerk sign-in/sign-up flows
+- Import: `import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"`
+- **REQUIRED**: Launch Clerk authentication inside the Dialog modal
+- **NO EXCEPTIONS**: All Clerk auth flows must be in shadcn/ui Dialog modals
+
+### ❌ WRONG - Using Clerk's Default Buttons:
+
+```tsx
+// ❌ FORBIDDEN - Do NOT do this
+import { SignInButton, SignUpButton } from "@clerk/nextjs"
+
+<SignInButton /> // WRONG - Clerk's default button
+<SignUpButton /> // WRONG - Clerk's default button
+
+// ❌ FORBIDDEN - Custom button for auth
+<button onClick={() => signIn()}>Sign In</button> // WRONG - raw HTML
+```
+
+### ✅ CORRECT - shadcn/ui Dialog + Button Pattern:
+
+```tsx
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { SignIn, SignUp } from "@clerk/nextjs"
+
+// ✅ CORRECT - Sign In Modal with shadcn/ui
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="default">Sign In</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <SignIn />
+  </DialogContent>
+</Dialog>
+
+// ✅ CORRECT - Sign Up Modal with shadcn/ui
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="outline">Sign Up</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <SignUp />
+  </DialogContent>
+</Dialog>
+```
+
+### 📋 Required Checklist for Clerk Integration:
+
+- ✅ Trigger button is shadcn/ui `Button` component
+- ✅ Modal wrapper is shadcn/ui `Dialog` component
+- ✅ Clerk's `<SignIn />` or `<SignUp />` appears **inside** shadcn/ui `DialogContent`
+- ✅ Use `asChild` prop on `DialogTrigger` to properly compose with Button
+- ❌ NEVER use Clerk's `<SignInButton>` or `<SignUpButton>` components
+- ❌ NEVER use custom button components
+- ❌ NEVER use raw HTML buttons for authentication
+
 ## Best Practices
 
-1. **Always use shadcn/ui components** for UI elements rather than building custom ones
+1. **EXCLUSIVELY use shadcn/ui components** - NO custom UI components allowed
 2. **Check if a component exists** in `components/ui/` before adding it
 3. **Use the built-in variants** provided by each component
 4. **Leverage Tailwind utilities** for custom styling alongside shadcn components
 5. **Follow the shadcn/ui composition pattern** when building complex UI
+6. **For Clerk**: Always wrap in shadcn/ui Dialog and trigger with shadcn/ui Button
+
+## 📝 Summary - Remember These Points
+
+### What You MUST Do:
+- ✅ Use shadcn/ui components for **ALL** UI elements
+- ✅ Add missing components with `npx shadcn@latest add [component-name]`
+- ✅ Import from `@/components/ui/[component-name]`
+- ✅ Use shadcn/ui `Button` for all clickable actions
+- ✅ Use shadcn/ui `Dialog` for all modals (including Clerk auth)
+- ✅ Style using Tailwind utilities on shadcn/ui components
+
+### What You MUST NEVER Do:
+- ❌ Create custom UI components
+- ❌ Use raw HTML elements (`<button>`, `<input>`, `<div>` with styling, etc.)
+- ❌ Use Clerk's default button components (`<SignInButton>`, `<SignUpButton>`)
+- ❌ Create any UI element that isn't from shadcn/ui
+
+### Quick Reference:
+- Need a button? → `import { Button } from "@/components/ui/button"`
+- Need a modal? → `import { Dialog } from "@/components/ui/dialog"`
+- Need an input? → `import { Input } from "@/components/ui/input"`
+- Need a card? → `import { Card } from "@/components/ui/card"`
+- Component missing? → `npx shadcn@latest add [component-name]`
 
 ## Project Configuration
 
