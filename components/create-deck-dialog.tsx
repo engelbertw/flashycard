@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createDeckAction } from '@/actions/deck-actions';
-import { generateCardsWithAI } from '@/actions/ai-actions';
+import { generateCardsWithAI, generateCardsWithCptainAI } from '@/actions/ai-actions';
 import { getRecentDeckTemplates, generateSmartTemplates } from '@/actions/template-actions';
 import { normalizeCardText } from '@/lib/text-utils';
 import {
@@ -43,6 +43,7 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
   const [recentTemplates, setRecentTemplates] = useState<any[]>([]);
   const [smartTemplates, setSmartTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [aiProvider, setAiProvider] = useState<'gemma3' | 'cptain'>('gemma3');
 
   // Template suggestions with topics
   const descriptionTemplates = [
@@ -264,7 +265,10 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
       return;
     }
 
-    const result = await generateCardsWithAI(description, cardCount);
+    // Choose which AI provider to use
+    const result = aiProvider === 'cptain'
+      ? await generateCardsWithCptainAI(description, cardCount)
+      : await generateCardsWithAI(description, cardCount);
 
     if (result.success && result.data) {
       // Convert parsed cards back to text format for the textarea
@@ -368,6 +372,7 @@ You can still create the deck with these ${result.data.count} cards, or try gene
       setDifficultyLevel('beginner');
       setRecentTemplates([]);
       setSmartTemplates([]);
+      setAiProvider('gemma3');
     }
   };
 
@@ -568,8 +573,44 @@ You can still create the deck with these ${result.data.count} cards, or try gene
               placeholder="e.g., 10"
             />
             <p className="text-xs text-muted-foreground">
-              ⚡ <strong>Best results: 5-10 cards per generation.</strong> The small Gemma3 270M model works better with smaller batches. Generate multiple times for larger decks.
+              {aiProvider === 'gemma3' 
+                ? '⚡ Best results: 5-10 cards per generation. The small Gemma3 270M model works better with smaller batches.'
+                : '☁️ Cptain AI can handle larger batches (up to 100 cards) with better quality.'}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>AI Provider</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={aiProvider === 'gemma3' ? "default" : "outline"}
+                size="sm"
+                className="flex-1 h-auto py-3"
+                onClick={() => setAiProvider('gemma3')}
+                disabled={isLoading || isGenerating}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <Cpu className="h-4 w-4" />
+                  <span className="text-xs font-semibold">Gemma3 (Local)</span>
+                  <span className="text-[10px] text-muted-foreground">Free, Private, Offline</span>
+                </div>
+              </Button>
+              <Button
+                type="button"
+                variant={aiProvider === 'cptain' ? "default" : "outline"}
+                size="sm"
+                className="flex-1 h-auto py-3"
+                onClick={() => setAiProvider('cptain')}
+                disabled={isLoading || isGenerating}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-semibold">Cptain AI (Cloud)</span>
+                  <span className="text-[10px] text-muted-foreground">Better Quality</span>
+                </div>
+              </Button>
+            </div>
           </div>
 
           <div className="flex gap-2">
@@ -583,18 +624,20 @@ You can still create the deck with these ${result.data.count} cards, or try gene
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating {cardCount} cards with Gemma3...
+                  Generating with {aiProvider === 'cptain' ? 'Cptain AI' : 'Gemma3'}...
                 </>
               ) : (
                 <>
-                  <Cpu className="mr-2 h-4 w-4" />
-                  Generate {cardCount} Card{cardCount !== 1 ? 's' : ''} with Gemma3
+                  {aiProvider === 'cptain' ? <Sparkles className="mr-2 h-4 w-4" /> : <Cpu className="mr-2 h-4 w-4" />}
+                  Generate {cardCount} Card{cardCount !== 1 ? 's' : ''} with {aiProvider === 'cptain' ? 'Cptain AI' : 'Gemma3'}
                 </>
               )}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            🖥️ Uses Gemma3 AI running locally on your computer (free, private, offline)
+            {aiProvider === 'gemma3'
+              ? '🖥️ Uses Gemma3 AI running locally on your computer (free, private, offline)'
+              : '☁️ Uses Cptain AI cloud service for higher quality card generation'}
           </p>
           
           <div className="space-y-2">

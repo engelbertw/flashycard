@@ -1,15 +1,15 @@
 # 🎴 FlashyCards
 
-A modern flashcard application with **AI-powered card generation** using local Gemma3 AI. Create, study, and manage flashcards completely free and private!
+A modern flashcard application with **AI-powered card generation** using either local Gemma3 AI or cloud-based Cptain AI. Create, study, and manage flashcards with flexibility!
 
 ## ✨ Features
 
-- 🤖 **AI Card Generation** - Generate flashcards using local Gemma3 AI (100% free, private, offline)
+- 🤖 **Dual AI Generation** - Choose between local Gemma3 AI (free, private, offline) or Cptain AI (cloud-based, higher quality)
 - 🎯 **Bulk Import** - Paste 50+ cards at once in simple format
 - 🔐 **Secure Authentication** - Powered by Clerk
 - 📊 **Deck Management** - Create, edit, delete decks and cards
 - 🎨 **Modern UI** - Dark mode with shadcn/ui components
-- 🔒 **Data Privacy** - All AI processing runs locally on your computer
+- 🔒 **Data Privacy** - Local AI option keeps all data on your computer
 
 ## 🚀 Quick Start
 
@@ -20,9 +20,10 @@ A modern flashcard application with **AI-powered card generation** using local G
    - The app will automatically download Gemma3 model when you first run it
 
 2. **Setup Environment**:
-   - Copy `.env.local.example` to `.env.local`
+   - Create `.env` file with required variables
    - Add your Clerk credentials
    - Add your database URL
+   - (Optional) Add Cptain AI credentials for cloud AI features
 
 ### Installation
 
@@ -50,8 +51,11 @@ Open [http://localhost:3000](http://localhost:3000) to see your app!
 2. Enter deck name (e.g., "Dutch Food Vocabulary")
 3. Enter description (e.g., "Typical food Dutch to English")
 4. Choose number of cards (e.g., 50)
-5. Click "Generate with Gemma3 (Local)"
-6. Review and create!
+5. Select AI provider:
+   - **Gemma3 (Local)** - Free, private, offline (best for 5-10 cards)
+   - **Cptain AI (Cloud)** - Higher quality, handles larger batches (up to 100 cards)
+6. Click "Generate"
+7. Review and create!
 
 ### Manual Card Import
 
@@ -81,7 +85,9 @@ npm run build
 npm run db:seed
 ```
 
-## 🤖 Local AI Setup
+## 🤖 AI Setup
+
+### Option 1: Local AI (Gemma3 via Ollama)
 
 Detailed instructions: [OLLAMA_SETUP.md](./OLLAMA_SETUP.md)
 
@@ -96,6 +102,24 @@ Detailed instructions: [OLLAMA_SETUP.md](./OLLAMA_SETUP.md)
 - Works Offline
 - No API Keys Needed
 
+### Option 2: Cloud AI (Cptain AI)
+
+**Setup:**
+1. Get your API key from Cptain
+2. Add to `.env`:
+   ```bash
+   CPTAIN_AUTH_URL=https://auth.cptain.nl
+   CPTAIN_API_URL=https://api.cptain.nl/api
+   CPTAIN_API_KEY=your_api_key_here
+   ```
+3. Restart the dev server: `npm run dev`
+
+**Benefits:**
+- Higher Quality Results
+- Handles Larger Batches (up to 100 cards)
+- No Local Installation Required
+- Faster Generation
+
 ## 🛠️ Tech Stack
 
 - **Framework:** Next.js 15 (App Router)
@@ -104,7 +128,9 @@ Detailed instructions: [OLLAMA_SETUP.md](./OLLAMA_SETUP.md)
 - **ORM:** Drizzle
 - **Authentication:** Clerk
 - **UI:** shadcn/ui + Tailwind CSS
-- **AI:** Gemma3 270M via Ollama (local)
+- **AI:** 
+  - Gemma3 270M via Ollama (local, free)
+  - Cptain AI (cloud, optional)
 
 ## 📁 Project Structure
 
