@@ -15,9 +15,6 @@ export function ClerkProviderWrapper({
     <ClerkProvider
       appearance={{
         baseTheme: resolvedTheme === "dark" ? dark : undefined,
-        branding: {
-          applicationName: "FlashyCards",
-        },
       }}
     >
       {children}

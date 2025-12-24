@@ -41,6 +41,11 @@ export function AuthButtons() {
           <SignIn 
             routing="hash"
             signUpUrl="#"
+            appearance={{
+              variables: {
+                colorPrimary: "hsl(var(--primary))",
+              },
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -55,6 +60,11 @@ export function AuthButtons() {
           <SignUp 
             routing="hash"
             signInUrl="#"
+            appearance={{
+              variables: {
+                colorPrimary: "hsl(var(--primary))",
+              },
+            }}
           />
         </DialogContent>
       </Dialog>
