@@ -11,6 +11,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { Button } from "@/components/ui/button";
+import { MobileNav } from "@/components/mobile-nav";
+import Link from "next/link";
+import { LayoutDashboard, Library, Trophy } from "lucide-react";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -39,9 +42,44 @@ export default function RootLayout({
           forcedTheme="dark"
         >
           <ClerkProviderWrapper>
-            <header className="border-b border-border bg-card">
+            <header className="border-b border-border bg-card sticky top-0 z-50">
               <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                <h1 className="text-xl font-semibold text-foreground">FlashyCards</h1>
+                <div className="flex items-center gap-8">
+                  <SignedIn>
+                    <MobileNav />
+                  </SignedIn>
+                  
+                  <Link href="/" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">
+                    FlashyCards
+                  </Link>
+                  
+                  <SignedIn>
+                    <nav className="hidden md:flex items-center gap-6">
+                      <Link 
+                        href="/dashboard" 
+                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                      <Link 
+                        href="/decks" 
+                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Library className="h-4 w-4" />
+                        Decks
+                      </Link>
+                      <Link 
+                        href="/leaderboards" 
+                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Trophy className="h-4 w-4" />
+                        Leaderboards
+                      </Link>
+                    </nav>
+                  </SignedIn>
+                </div>
+                
                 <div className="flex items-center gap-4">
                   <SignedOut>
                     <SignInButton 

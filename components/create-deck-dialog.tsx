@@ -35,50 +35,118 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string>('');
+  const [customTopic, setCustomTopic] = useState<string>('');
+  const [difficultyLevel, setDifficultyLevel] = useState<'beginner' | 'intermediate' | 'expert'>('beginner');
 
-  // Template suggestions for descriptions
+  // Template suggestions with topics
   const descriptionTemplates = [
     { 
-      label: 'Dutch → English', 
-      value: 'common dutch words with english translations',
-      deckName: 'Dutch Vocabulary'
+      id: 'dutch-english',
+      label: 'Dutch → English',
+      baseDescription: 'dutch words with english translations',
+      deckName: 'Dutch Vocabulary',
+      topics: ['food', 'animals', 'colors', 'numbers', 'family', 'verbs', 'adjectives', 'greetings']
     },
     { 
-      label: 'Spanish → English', 
-      value: 'basic spanish vocabulary with english translations',
-      deckName: 'Spanish Basics'
+      id: 'spanish-english',
+      label: 'Spanish → English',
+      baseDescription: 'spanish vocabulary with english translations',
+      deckName: 'Spanish Basics',
+      topics: ['food', 'animals', 'colors', 'numbers', 'family', 'verbs', 'travel', 'greetings']
     },
     { 
-      label: 'French → English', 
-      value: 'common french phrases with english translations',
-      deckName: 'French Phrases'
+      id: 'french-english',
+      label: 'French → English',
+      baseDescription: 'french phrases with english translations',
+      deckName: 'French Phrases',
+      topics: ['food', 'travel', 'shopping', 'restaurant', 'directions', 'verbs', 'adjectives']
     },
     { 
-      label: 'German → English', 
-      value: 'basic german words with english translations',
-      deckName: 'German Basics'
+      id: 'german-english',
+      label: 'German → English',
+      baseDescription: 'german words with english translations',
+      deckName: 'German Basics',
+      topics: ['food', 'animals', 'colors', 'numbers', 'family', 'verbs', 'compound words']
     },
     { 
-      label: 'Capital Cities', 
-      value: 'european capital cities and their countries',
-      deckName: 'European Capitals'
+      id: 'geography',
+      label: 'Geography',
+      baseDescription: 'geography facts and locations',
+      deckName: 'Geography',
+      topics: ['capitals', 'countries', 'rivers', 'mountains', 'oceans', 'flags', 'landmarks']
     },
     { 
-      label: 'Math Terms', 
-      value: 'mathematical terms and their definitions',
-      deckName: 'Math Vocabulary'
+      id: 'math',
+      label: 'Mathematics',
+      baseDescription: 'mathematical concepts and formulas',
+      deckName: 'Math Concepts',
+      topics: ['algebra', 'geometry', 'trigonometry', 'calculus', 'statistics', 'formulas']
     },
     { 
-      label: 'Science Terms', 
-      value: 'basic science vocabulary and definitions',
-      deckName: 'Science Basics'
+      id: 'science',
+      label: 'Science',
+      baseDescription: 'science concepts and definitions',
+      deckName: 'Science',
+      topics: ['biology', 'chemistry', 'physics', 'anatomy', 'elements', 'laws']
+    },
+    { 
+      id: 'history',
+      label: 'History',
+      baseDescription: 'historical events and dates',
+      deckName: 'History',
+      topics: ['wars', 'revolutions', 'inventions', 'leaders', 'ancient civilizations', 'modern history']
     },
   ];
 
   const handleTemplateClick = (template: typeof descriptionTemplates[0]) => {
-    setDescription(template.value);
+    setSelectedTemplate(template.id);
+    setSelectedTopic(''); // Reset topic selection
+    setCustomTopic(''); // Reset custom topic
+    
+    // Build the initial description
+    const levelPrefix = difficultyLevel === 'beginner' ? 'basic' : difficultyLevel === 'intermediate' ? 'common' : 'advanced';
+    setDescription(`${levelPrefix} ${template.baseDescription}`);
+    
     if (!name) {
       setName(template.deckName);
+    }
+  };
+
+  const handleTopicSelect = (topic: string) => {
+    setSelectedTopic(topic);
+    setCustomTopic(''); // Clear custom topic if selecting from list
+    
+    const template = descriptionTemplates.find(t => t.id === selectedTemplate);
+    if (template) {
+      const levelPrefix = difficultyLevel === 'beginner' ? 'basic' : difficultyLevel === 'intermediate' ? 'common' : 'advanced';
+      setDescription(`${levelPrefix} ${template.baseDescription} about ${topic}`);
+    }
+  };
+
+  const handleCustomTopicChange = (topic: string) => {
+    setCustomTopic(topic);
+    setSelectedTopic(''); // Clear predefined topic if entering custom
+    
+    const template = descriptionTemplates.find(t => t.id === selectedTemplate);
+    if (template && topic.trim()) {
+      const levelPrefix = difficultyLevel === 'beginner' ? 'basic' : difficultyLevel === 'intermediate' ? 'common' : 'advanced';
+      setDescription(`${levelPrefix} ${template.baseDescription} about ${topic.trim()}`);
+    } else if (template) {
+      const levelPrefix = difficultyLevel === 'beginner' ? 'basic' : difficultyLevel === 'intermediate' ? 'common' : 'advanced';
+      setDescription(`${levelPrefix} ${template.baseDescription}`);
+    }
+  };
+
+  const handleDifficultyChange = (level: 'beginner' | 'intermediate' | 'expert') => {
+    setDifficultyLevel(level);
+    
+    const template = descriptionTemplates.find(t => t.id === selectedTemplate);
+    if (template) {
+      const levelPrefix = level === 'beginner' ? 'basic' : level === 'intermediate' ? 'common' : 'advanced';
+      const topicPart = selectedTopic ? ` about ${selectedTopic}` : customTopic.trim() ? ` about ${customTopic.trim()}` : '';
+      setDescription(`${levelPrefix} ${template.baseDescription}${topicPart}`);
     }
   };
 
@@ -215,10 +283,14 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
       // Reset on close
       setName('');
       setDescription('');
-      setCardCount(15); // Lowered from 20 to 15
+      setCardCount(15);
       setCardsText('');
       setError(null);
       setWarning(null);
+      setSelectedTemplate(null);
+      setSelectedTopic('');
+      setCustomTopic('');
+      setDifficultyLevel('beginner');
     }
   };
 
@@ -260,9 +332,9 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
               <div className="flex flex-wrap gap-2">
                 {descriptionTemplates.map((template) => (
                   <Button
-                    key={template.label}
+                    key={template.id}
                     type="button"
-                    variant="outline"
+                    variant={selectedTemplate === template.id ? "default" : "outline"}
                     size="sm"
                     className="h-7 text-xs"
                     onClick={() => handleTemplateClick(template)}
@@ -273,17 +345,68 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
                 ))}
               </div>
             </div>
+
+            {/* Difficulty Level Selector */}
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground font-medium">Difficulty Level:</p>
+              <div className="flex gap-2">
+                {(['beginner', 'intermediate', 'expert'] as const).map((level) => (
+                  <Button
+                    key={level}
+                    type="button"
+                    variant={difficultyLevel === level ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 text-xs flex-1"
+                    onClick={() => handleDifficultyChange(level)}
+                    disabled={isLoading || isGenerating}
+                  >
+                    {level === 'beginner' ? '🌱 Beginner' : level === 'intermediate' ? '📚 Intermediate' : '🎓 Expert'}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Topic Selector (shown when a template is selected) */}
+            {selectedTemplate && (
+              <div className="space-y-1 border rounded-lg p-3 bg-muted/30">
+                <p className="text-xs text-muted-foreground font-medium">Select or Add a Topic:</p>
+                <div className="flex flex-wrap gap-2">
+                  {descriptionTemplates.find(t => t.id === selectedTemplate)?.topics.map((topic) => (
+                    <Button
+                      key={topic}
+                      type="button"
+                      variant={selectedTopic === topic ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => handleTopicSelect(topic)}
+                      disabled={isLoading || isGenerating}
+                    >
+                      {topic}
+                    </Button>
+                  ))}
+                </div>
+                <div className="mt-2">
+                  <Input
+                    value={customTopic}
+                    onChange={(e) => handleCustomTopicChange(e.target.value)}
+                    placeholder="Or type your own topic..."
+                    disabled={isLoading || isGenerating}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+            )}
             
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., italian food words with english translations, french verbs with conjugations, world capitals and countries"
+              placeholder="e.g., basic italian food words with english translations, advanced french verbs with conjugations"
               disabled={isLoading || isGenerating}
               rows={2}
             />
             <p className="text-xs text-muted-foreground">
-              💡 <strong>Tip:</strong> Templates auto-fill the description and deck name. Use keywords like "with english translations" for best results.
+              💡 <strong>Tip:</strong> Select a template, choose difficulty level (beginner/intermediate/expert), and pick a topic. Description auto-updates!
             </p>
           </div>
 
