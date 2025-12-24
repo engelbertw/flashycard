@@ -9,7 +9,6 @@ import {
 } from "@clerk/nextjs";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ModeToggle } from "@/components/mode-toggle";
 import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { Button } from "@/components/ui/button";
 
@@ -34,16 +33,16 @@ export default function RootLayout({
       <body className={`${poppins.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
+          forcedTheme="dark"
         >
           <ClerkProviderWrapper>
             <header className="border-b border-border bg-card">
               <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <h1 className="text-xl font-semibold text-foreground">FlashyCards</h1>
                 <div className="flex items-center gap-4">
-                  <ModeToggle />
                   <SignedOut>
                     <SignInButton 
                       mode="modal"

@@ -14,37 +14,77 @@ alwaysApply: true
 3. **NO RAW HTML UI ELEMENTS** - Do not use raw `<button>`, `<input>`, `<dialog>`, etc. Always use shadcn/ui components
 4. **NO CUSTOM STYLING ON BASE ELEMENTS** - Style only through shadcn/ui component variants and Tailwind utilities
 5. **NO EXCEPTIONS FOR "SIMPLE" COMPONENTS** - Even the simplest button or div with styling must use shadcn/ui
+6. **EVERY SINGLE UI ELEMENT** - Buttons, inputs, cards, dialogs, dropdowns, modals, forms, badges, alerts, etc. MUST be shadcn/ui components
 
 **IF A COMPONENT YOU NEED DOESN'T EXIST:** Add it using `npx shadcn@latest add [component-name]`
 
+### 🛑 STOP AND CHECK - Before Writing ANY UI Code:
+
+- [ ] Am I about to create a custom component for UI? → **STOP! Use shadcn/ui instead**
+- [ ] Am I about to use raw HTML (`<button>`, `<input>`, `<div>` with styling)? → **STOP! Use shadcn/ui instead**
+- [ ] Am I about to use Clerk's default buttons? → **STOP! Use shadcn/ui Button + Dialog instead**
+- [ ] Does the component I need exist in shadcn/ui? → **YES! Add it with `npx shadcn@latest add [component]`**
+
 ## 🚫 FORBIDDEN PATTERNS - NEVER DO THESE
+
+**REMEMBER: If you're writing UI code and NOT importing from `@/components/ui/`, you're doing it WRONG!**
 
 ### ❌ WRONG - Custom UI Components:
 ```tsx
-// FORBIDDEN - Do not create custom UI
+// ❌ FORBIDDEN - Do not create custom UI components
 const CustomButton = ({ children }) => (
   <button className="px-4 py-2 bg-blue-500">{children}</button>
 )
+
+// ❌ FORBIDDEN - Do not wrap HTML elements in custom components
+const MyCard = ({ children }) => (
+  <div className="border rounded p-4">{children}</div>
+)
+
+// ❌ FORBIDDEN - Do not create custom styled components
+const StyledInput = styled.input`
+  border: 1px solid gray;
+`
 ```
 
 ### ❌ WRONG - Raw HTML Elements:
 ```tsx
-// FORBIDDEN - Do not use raw HTML for UI
+// ❌ FORBIDDEN - Do not use raw HTML for UI
 <button className="px-4 py-2">Click Me</button>
 <input type="text" className="border rounded" />
 <div className="border rounded p-4">Card content</div>
+<select className="border">...</select>
+<textarea className="border rounded">...</textarea>
+<form className="space-y-4">...</form>
 ```
 
-### ✅ CORRECT - shadcn/ui Components:
+### ❌ WRONG - Any UI Element Without shadcn/ui:
 ```tsx
-// CORRECT - Always use shadcn/ui
+// ❌ FORBIDDEN - Even "simple" elements need shadcn/ui
+<div className="flex items-center gap-2 p-4 bg-slate-100 rounded">
+  <button className="px-3 py-1 bg-blue-500">Action</button>
+</div>
+
+// ❌ FORBIDDEN - Don't style divs for UI purposes
+<div className="border-2 border-dashed p-8 text-center">
+  Drop files here
+</div>
+```
+
+### ✅ CORRECT - shadcn/ui Components ONLY:
+```tsx
+// ✅ CORRECT - Always use shadcn/ui
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import { Select } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 <Button>Click Me</Button>
 <Input type="text" />
 <Card>Card content</Card>
+<Select>...</Select>
+<Textarea />
 ```
 
 ## Component Library
@@ -52,6 +92,7 @@ import { Card } from "@/components/ui/card"
 - **UI Framework**: shadcn/ui with Tailwind CSS v4
 - **Icon Library**: lucide-react
 - **Styling**: Tailwind CSS with CSS variables for theming
+- **Theme Mode**: Dark mode only (no light mode support)
 
 ## Installation Commands
 
@@ -82,7 +123,27 @@ npx shadcn@latest add [component-name]
 - All UI components **MUST** be imported from `@/components/ui/[component-name]`
 - The utility function `cn()` from [lib/utils.ts](mdc:lib/utils.ts) should be used for conditional styling
 - Theme colors are defined in [app/globals.css](mdc:app/globals.css) using CSS variables
-- Components support light and dark modes automatically
+- **This project uses DARK MODE ONLY** - No light mode implementation or toggle required
+
+## 🌙 Dark Mode - Project Theme
+
+**THIS PROJECT IS DARK MODE ONLY**
+
+### Important Theme Rules:
+
+1. ✅ **Dark mode is the ONLY theme** - This is not a toggleable theme
+2. ❌ **DO NOT implement light mode** - No light mode variants needed
+3. ❌ **DO NOT add theme toggles** - No light/dark mode switcher components
+4. ✅ **All styling is for dark mode** - Design and test only in dark mode
+5. ✅ **Use dark mode Tailwind classes** - Optimize for dark backgrounds and light text
+
+### Styling Guidelines:
+
+- Use appropriate contrast ratios for dark backgrounds
+- Text should be light colors (e.g., `text-gray-100`, `text-white`)
+- Backgrounds should use dark shades (e.g., `bg-gray-900`, `bg-black`)
+- All shadcn/ui components will render in their dark mode variants
+- Do not add `dark:` prefixes unnecessarily - assume dark mode is default
 
 ## 🔐 Clerk Authentication Integration
 
@@ -153,37 +214,69 @@ import { SignIn, SignUp } from "@clerk/nextjs"
 - ❌ NEVER use custom button components
 - ❌ NEVER use raw HTML buttons for authentication
 
+## ⚠️ Consequences of Violating These Rules
+
+**If you create ANY custom UI components or use raw HTML for UI elements:**
+
+- ❌ Code will be REJECTED
+- ❌ Pull requests will NOT be approved
+- ❌ The codebase will be INCONSISTENT
+- ❌ Design system will be BROKEN
+- ❌ You will have to REWRITE the code using shadcn/ui
+
+**There are NO exceptions. NO excuses. NO shortcuts.**
+
 ## Best Practices
 
-1. **EXCLUSIVELY use shadcn/ui components** - NO custom UI components allowed
+1. **EXCLUSIVELY use shadcn/ui components** - NO custom UI components allowed, EVER
 2. **Check if a component exists** in `components/ui/` before adding it
 3. **Use the built-in variants** provided by each component
-4. **Leverage Tailwind utilities** for custom styling alongside shadcn components
+4. **Leverage Tailwind utilities** for custom styling alongside shadcn components ONLY
 5. **Follow the shadcn/ui composition pattern** when building complex UI
 6. **For Clerk**: Always wrap in shadcn/ui Dialog and trigger with shadcn/ui Button
+7. **When in doubt**: If it's UI, it MUST be shadcn/ui
+
+## ✅ Before Committing - Verification Checklist
+
+Before committing ANY code with UI elements, verify:
+
+1. [ ] **NO custom UI components created** - Search for: `const.*=.*<(button|input|div|form|select|textarea)` in your code
+2. [ ] **ALL imports from `@/components/ui/`** - Every UI element imported from shadcn/ui
+3. [ ] **NO raw HTML UI elements** - No `<button>`, `<input>`, `<select>`, `<textarea>`, or styled `<div>` tags
+4. [ ] **Clerk uses shadcn/ui Dialog + Button** - NO `<SignInButton>` or `<SignUpButton>` from Clerk
+5. [ ] **All clickable elements are shadcn/ui Buttons** - Search your code for raw `<button>` tags → should be 0
+
+**If ANY of these checks fail, STOP and refactor to use shadcn/ui components.**
 
 ## 📝 Summary - Remember These Points
 
 ### What You MUST Do:
-- ✅ Use shadcn/ui components for **ALL** UI elements
+- ✅ Use shadcn/ui components for **EVERY SINGLE** UI element
 - ✅ Add missing components with `npx shadcn@latest add [component-name]`
-- ✅ Import from `@/components/ui/[component-name]`
-- ✅ Use shadcn/ui `Button` for all clickable actions
+- ✅ Import from `@/components/ui/[component-name]` for ALL UI
+- ✅ Use shadcn/ui `Button` for all clickable actions (including Clerk auth triggers)
 - ✅ Use shadcn/ui `Dialog` for all modals (including Clerk auth)
-- ✅ Style using Tailwind utilities on shadcn/ui components
+- ✅ Style using Tailwind utilities on shadcn/ui components ONLY
+- ✅ Check `components/ui/` folder to see what's already available
 
 ### What You MUST NEVER Do:
-- ❌ Create custom UI components
-- ❌ Use raw HTML elements (`<button>`, `<input>`, `<div>` with styling, etc.)
+- ❌ Create custom UI components (NO custom buttons, cards, inputs, etc.)
+- ❌ Use raw HTML elements for UI (`<button>`, `<input>`, `<div>` with styling, etc.)
 - ❌ Use Clerk's default button components (`<SignInButton>`, `<SignUpButton>`)
 - ❌ Create any UI element that isn't from shadcn/ui
+- ❌ Think "this is too simple for shadcn/ui" - USE shadcn/ui ANYWAY
 
 ### Quick Reference:
 - Need a button? → `import { Button } from "@/components/ui/button"`
 - Need a modal? → `import { Dialog } from "@/components/ui/dialog"`
 - Need an input? → `import { Input } from "@/components/ui/input"`
 - Need a card? → `import { Card } from "@/components/ui/card"`
+- Need a form? → `import { Form } from "@/components/ui/form"`
+- Need a select? → `import { Select } from "@/components/ui/select"`
+- Need an alert? → `import { Alert } from "@/components/ui/alert"`
+- Need a badge? → `import { Badge } from "@/components/ui/badge"`
 - Component missing? → `npx shadcn@latest add [component-name]`
+- **Reminder**: If you're typing `<button`, `<input`, `<div className=`, you're doing it WRONG!
 
 ## Project Configuration
 
@@ -191,3 +284,38 @@ import { SignIn, SignUp } from "@clerk/nextjs"
 - Utility functions: [lib/utils.ts](mdc:lib/utils.ts)
 - Global styles: [app/globals.css](mdc:app/globals.css)
 - Tailwind config: [tailwind.config.ts](mdc:tailwind.config.ts)
+
+---
+
+## 🎯 FINAL REMINDER - The Golden Rule
+
+**IF IT'S UI → IT MUST BE shadcn/ui**
+
+### No Exceptions. No Compromises. No Custom Components.
+
+- Every button → shadcn/ui `Button`
+- Every input → shadcn/ui `Input`
+- Every card → shadcn/ui `Card`
+- Every modal → shadcn/ui `Dialog`
+- Every form element → shadcn/ui component
+- Every UI element → shadcn/ui component
+
+### The ONLY Valid Pattern:
+
+```tsx
+import { ComponentName } from "@/components/ui/component-name"
+```
+
+**If your import doesn't look like this for UI elements, you're breaking the rules.**
+
+### One More Time For Absolute Clarity:
+
+1. ✅ **DO**: Use shadcn/ui for all UI
+2. ❌ **DON'T**: Create custom UI components
+3. ✅ **DO**: Import from `@/components/ui/`
+4. ❌ **DON'T**: Use raw HTML for UI (`<button>`, `<input>`, etc.)
+5. ✅ **DO**: Add missing components with `npx shadcn@latest add [component]`
+6. ❌ **DON'T**: Use Clerk's `<SignInButton>` or `<SignUpButton>`
+7. ✅ **DO**: Use shadcn/ui `Button` + `Dialog` for Clerk auth
+
+**This is not a suggestion. This is a requirement. Follow it without exception.**

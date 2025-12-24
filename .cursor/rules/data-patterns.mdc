@@ -1,50 +1,11 @@
-# Data Fetching & Mutation Patterns
-
-This project follows strict architectural patterns for data operations and validation.
-
-## Core Principles
-
-1. **Data Retrieval** → Server Components ONLY → Using query helpers from `db/queries/`
-2. **Data Mutations** (Create/Update/Delete) → Server Actions ONLY → Using query helpers from `db/queries/`
-3. **Database Access** → Through helper functions in `db/queries/` directory ONLY
-4. **Data Validation** → Zod schemas ALWAYS
-5. **Type Safety** → TypeScript types for all server action parameters (NO FormData type)
-
-## 🚨 CRITICAL RULE: Database Query Abstraction
-
-**ALL database queries MUST be encapsulated in helper functions within the `db/queries/` directory.**
-
-### ❌ FORBIDDEN: Direct Database Queries
-```typescript
-// ❌ DO NOT write database queries directly in components or actions
-export default async function DecksPage() {
-  const decks = await db
-    .select()
-    .from(decksTable)
-    .where(eq(decksTable.userId, userId)); // ❌ WRONG
-}
-```
-
-### ✅ REQUIRED: Use Query Helpers
-```typescript
-// ✅ CORRECT - Use query helpers from db/queries/
-import { getUserDecks } from '@/db/queries/decks';
-
-export default async function DecksPage() {
-  const decks = await getUserDecks(userId); // ✅ CORRECT
-}
-```
-
-## Installation
-
-If Zod is not installed:
-```bash
-npm install zod
-```
-
+---
+alwaysApply: true
+---
 ## Query Helper Pattern
 
 ### Creating Query Helpers in `db/queries/`
+
+**THIS IS THE ONLY PLACE WHERE DATABASE QUERIES ARE ALLOWED.**
 
 All database queries must be defined as helper functions in the `db/queries/` directory:
 
@@ -421,29 +382,57 @@ export async function createDeckAction(input: CreateDeckInput) {
 }
 ```
 
-### ❌ FORBIDDEN: Anti-Patterns
+### ❌ FORBIDDEN: Anti-Patterns - NEVER DO THESE
 
-**Direct Database Queries**
+**1. Direct Database Queries (CRITICAL VIOLATION)**
 ```typescript
-// ❌ DO NOT write database queries outside of db/queries/
+// ❌ FORBIDDEN - Writing queries outside db/queries/
+import { db } from '@/db'; // ❌ If you see this outside db/queries/, it's WRONG
+
 export async function DecksPage() {
+  // ❌ FORBIDDEN - Any db.select/insert/update/delete outside db/queries/
   const decks = await db
     .select()
     .from(decksTable)
-    .where(eq(decksTable.userId, userId)); // ❌ FORBIDDEN
+    .where(eq(decksTable.userId, userId)); // ❌ ARCHITECTURAL VIOLATION
+}
+
+// ✅ CORRECT - Use query helper
+import { getUserDecks } from '@/db/queries/decks';
+
+export async function DecksPage() {
+  const decks = await getUserDecks(userId); // ✅ CORRECT
 }
 ```
 
-**Using FormData Type**
+**2. Importing Database Client Outside db/queries/ (CRITICAL VIOLATION)**
+```typescript
+// ❌ FORBIDDEN - Importing db outside db/queries/
+import { db } from '@/db'; // ❌ WRONG - This import should ONLY be in db/queries/*.ts
+
+// ❌ FORBIDDEN - Importing table schemas outside db/queries/
+import { decksTable, cardsTable } from '@/db/schema'; // ❌ WRONG - Only in db/queries/*.ts
+
+// ✅ CORRECT - Only import query helpers
+import { getUserDecks, createDeck } from '@/db/queries/decks'; // ✅ CORRECT
+```
+
+**3. Using FormData Type**
 ```typescript
 // ❌ DO NOT use FormData as the parameter type
 export async function createDeckAction(formData: FormData) {
   const name = formData.get('name');
   // ...
 }
+
+// ✅ CORRECT - Use typed objects
+export async function createDeckAction(input: CreateDeckInput) {
+  const validated = createDeckSchema.safeParse(input);
+  // ...
+}
 ```
 
-**No Validation**
+**4. No Validation**
 ```typescript
 // ❌ DO NOT skip Zod validation
 export async function createDeckAction(input: CreateDeckInput) {
@@ -451,27 +440,108 @@ export async function createDeckAction(input: CreateDeckInput) {
   
   const deck = await createDeckQuery(userId, input.name); // ❌ Using unvalidated input
 }
+
+// ✅ CORRECT - Always validate
+export async function createDeckAction(input: CreateDeckInput) {
+  const validated = createDeckSchema.safeParse(input); // ✅ CORRECT
+  if (!validated.success) {
+    return { success: false, error: validated.error.flatten().fieldErrors };
+  }
+  // ...
+}
 ```
 
-**Client-Side Mutations**
+**5. Client-Side Database Access (CRITICAL VIOLATION)**
 ```typescript
 'use client';
 
-// ❌ DO NOT perform mutations in client components
+import { db } from '@/db'; // ❌ FORBIDDEN - Cannot import db in client components
+
+// ❌ DO NOT perform database operations in client components
 export function CreateDeckForm() {
   const handleSubmit = async () => {
-    await db.insert(decksTable).values({...}); // ❌ FORBIDDEN
+    await db.insert(decksTable).values({...}); // ❌ ARCHITECTURAL VIOLATION
+  };
+}
+
+// ✅ CORRECT - Call server actions
+import { createDeckAction } from '@/actions/deck-actions';
+
+export function CreateDeckForm() {
+  const handleSubmit = async () => {
+    await createDeckAction({ name: 'My Deck' }); // ✅ CORRECT
   };
 }
 ```
 
-**API Routes for Mutations**
+**6. API Routes for Mutations**
 ```typescript
 // app/api/decks/route.ts
 // ❌ DO NOT use API routes for mutations - use Server Actions instead
 export async function POST(request: Request) {
   const body = await request.json();
+  
+  // ❌ Even worse - direct database query in API route
+  await db.insert(decksTable).values(body);
   // ...
+}
+
+// ✅ CORRECT - Use Server Actions for mutations
+// actions/deck-actions.ts
+'use server';
+
+export async function createDeckAction(input: CreateDeckInput) {
+  // Validation, authentication, then call query helper
+  const newDeck = await createDeck(userId, validated.data.name);
+  return { success: true, data: newDeck };
+}
+```
+
+**7. Mixing Query Logic with Business Logic**
+```typescript
+// ❌ FORBIDDEN - Query logic mixed with component logic
+export async function DecksPage() {
+  const { userId } = await auth();
+  
+  // ❌ WRONG - Complex query with joins, filters, ordering in component
+  const decks = await db
+    .select({
+      id: decksTable.id,
+      name: decksTable.name,
+      cardCount: sql<number>`count(${cardsTable.id})`,
+    })
+    .from(decksTable)
+    .leftJoin(cardsTable, eq(decksTable.id, cardsTable.deckId))
+    .where(eq(decksTable.userId, userId))
+    .groupBy(decksTable.id)
+    .orderBy(desc(decksTable.createdAt));
+  
+  return <div>...</div>;
+}
+
+// ✅ CORRECT - Query logic in db/queries/
+// db/queries/decks.ts
+export async function getUserDecksWithCardCount(userId: string) {
+  return await db
+    .select({
+      id: decksTable.id,
+      name: decksTable.name,
+      cardCount: sql<number>`count(${cardsTable.id})`,
+    })
+    .from(decksTable)
+    .leftJoin(cardsTable, eq(decksTable.id, cardsTable.deckId))
+    .where(eq(decksTable.userId, userId))
+    .groupBy(decksTable.id)
+    .orderBy(desc(decksTable.createdAt));
+}
+
+// Component
+import { getUserDecksWithCardCount } from '@/db/queries/decks';
+
+export async function DecksPage() {
+  const { userId } = await auth();
+  const decks = await getUserDecksWithCardCount(userId); // ✅ CORRECT
+  return <div>...</div>;
 }
 ```
 
@@ -772,3 +842,99 @@ revalidateTag('decks');
 Component/Action → Query Helper → Database
      (UI)       → (db/queries/)  → (Drizzle ORM)
 ```
+
+## ✅ Pre-Commit Verification Checklist
+
+Before committing ANY code that touches data, verify:
+
+### 1. Database Query Location Check
+- [ ] Search your code for `db.select(` - Should ONLY appear in `db/queries/*.ts`
+- [ ] Search your code for `db.insert(` - Should ONLY appear in `db/queries/*.ts`
+- [ ] Search your code for `db.update(` - Should ONLY appear in `db/queries/*.ts`
+- [ ] Search your code for `db.delete(` - Should ONLY appear in `db/queries/*.ts`
+- [ ] Search your code for `from(` - Should ONLY appear in `db/queries/*.ts` (Drizzle ORM method)
+
+### 2. Import Verification
+- [ ] Components import from `@/db/queries/*` - ✅ CORRECT
+- [ ] Server Actions import from `@/db/queries/*` - ✅ CORRECT
+- [ ] Components/Actions do NOT import `db` from `@/db` - ❌ If they do, it's WRONG
+- [ ] Components/Actions do NOT import table schemas (like `decksTable`) - ❌ If they do, it's WRONG
+
+### 3. Query Helper Existence
+- [ ] Every database operation has a corresponding helper function in `db/queries/`
+- [ ] Query helpers are named descriptively (e.g., `getUserDecks`, `createDeck`, `updateDeck`)
+- [ ] Query helpers include ownership verification (filter by `userId`)
+- [ ] Query helpers have JSDoc comments
+
+### 4. Validation & Security
+- [ ] All server actions use Zod validation with `.safeParse()`
+- [ ] All server actions check authentication with `await auth()`
+- [ ] All server actions return consistent shape: `{ success: boolean, data?: T, error?: E }`
+- [ ] All data operations filter by authenticated user's ID
+
+### 5. Architecture Compliance
+- [ ] Data fetching happens in Server Components
+- [ ] Data mutations happen in Server Actions
+- [ ] Client Components only call Server Actions (never database directly)
+- [ ] No `useEffect` for data fetching
+- [ ] No React Query, SWR, or other client-side data fetching libraries
+
+### 6. File Structure
+- [ ] Query helpers are in `db/queries/` directory
+- [ ] Server actions are in `actions/` or co-located with routes
+- [ ] Zod schemas are in `lib/validations.ts` or co-located with actions
+- [ ] No database queries in `app/` directory files
+
+## 🛑 STOP - If Any Check Fails
+
+If ANY of the above checks fail:
+
+1. **DO NOT COMMIT** - Your code violates the architectural patterns
+2. **REFACTOR IMMEDIATELY** - Move database queries to `db/queries/`
+3. **CREATE QUERY HELPERS** - Extract all database logic into helper functions
+4. **UPDATE IMPORTS** - Change imports to use query helpers instead of direct DB access
+5. **RE-RUN CHECKLIST** - Verify all checks pass before committing
+
+## 🔍 Quick Self-Audit Commands
+
+Run these commands to verify your code follows the patterns:
+
+```bash
+# Find any db.select/insert/update/delete outside of db/queries/
+# Should return NO results outside of db/queries/ directory
+grep -r "db\\.select\\|db\\.insert\\|db\\.update\\|db\\.delete" app/ actions/ components/
+
+# Find any imports of db from @/db outside of db/queries/
+# Should return NO results outside of db/queries/ directory  
+grep -r "from '@/db'" app/ actions/ components/
+
+# Find any table schema imports outside of db/queries/
+# Should return NO results outside of db/queries/ directory
+grep -r "from '@/db/schema'" app/ actions/ components/
+```
+
+If ANY of these commands return results, **you have architectural violations that MUST be fixed.**
+
+## 📚 Final Reminder
+
+**The ONLY place where you should see Drizzle ORM methods (`db.select()`, `db.insert()`, etc.) is in `db/queries/*.ts` files.**
+
+**Everywhere else should ONLY import and call query helper functions.**
+
+**No exceptions. No shortcuts. No "just this once."**
+
+---
+
+## 🎯 TL;DR - The Absolute Rules
+
+1. ✅ **ALL database queries** → `db/queries/` directory ONLY
+2. ✅ **Server Components** → Call query helpers from `db/queries/`
+3. ✅ **Server Actions** → Call query helpers from `db/queries/`
+4. ❌ **NEVER** write `db.select()`, `db.insert()`, `db.update()`, or `db.delete()` outside `db/queries/`
+5. ❌ **NEVER** import `db` from `@/db` in components or actions
+6. ❌ **NEVER** import table schemas in components or actions
+7. ✅ **ALWAYS** validate with Zod in server actions
+8. ✅ **ALWAYS** authenticate with `await auth()` in server actions
+9. ✅ **ALWAYS** filter by `userId` in query helpers
+
+**If you're unsure whether your code follows these rules, IT PROBABLY DOESN'T. Double-check the verification checklist above.**

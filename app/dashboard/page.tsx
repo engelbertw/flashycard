@@ -4,6 +4,7 @@ import { getUserDecks } from "@/db/queries/decks";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { CreateDeckDialog } from "@/components/create-deck-dialog";
 
 export default async function Dashboard() {
   const { userId } = await auth();
@@ -26,30 +27,8 @@ export default async function Dashboard() {
           </CardHeader>
         </Card>
 
-        {/* Quick Stats */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">{decks.length}</CardTitle>
-              <CardDescription>Total Decks</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">0</CardTitle>
-              <CardDescription>Cards Studied Today</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">0</CardTitle>
-              <CardDescription>Study Streak</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
         {/* Quick Actions */}
-        <Card>
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl">Quick Actions</CardTitle>
             <CardDescription>Get started with your flashcards</CardDescription>
@@ -58,10 +37,56 @@ export default async function Dashboard() {
             <Button asChild size="lg">
               <Link href="/decks">View All Decks</Link>
             </Button>
-            <Button size="lg" variant="outline">Create New Deck</Button>
-            <Button size="lg" variant="outline">Start Study Session</Button>
+            <CreateDeckDialog
+              trigger={<Button size="lg" variant="outline">Create New Deck</Button>}
+              redirectAfterCreate={true}
+            />
           </CardContent>
         </Card>
+
+        {/* Recent Decks */}
+        {decks.length > 0 ? (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-2xl">Your Decks</CardTitle>
+              <CardDescription>Recently created decks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {decks.map((deck) => (
+                  <Link key={deck.id} href={`/decks/${deck.id}`} className="block transition-transform hover:scale-105">
+                    <Card className="h-full cursor-pointer">
+                      <CardHeader>
+                        <CardTitle>{deck.name}</CardTitle>
+                        {deck.description && (
+                          <CardDescription>{deck.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Updated: {new Date(deck.updatedAt).toLocaleDateString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="text-2xl">No Decks Yet</CardTitle>
+              <CardDescription>Create your first deck to get started</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CreateDeckDialog
+                trigger={<Button size="lg">+ Create Your First Deck</Button>}
+                redirectAfterCreate={true}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

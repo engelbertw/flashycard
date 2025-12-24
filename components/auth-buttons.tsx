@@ -1,10 +1,33 @@
 "use client";
 
+import { useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { SignIn, SignUp } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function AuthButtons() {
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      // User is signed in, redirect to dashboard
+      router.push("/dashboard");
+    }
+  }, [isSignedIn, isLoaded, router]);
+
+  // Don't render auth buttons if still loading
+  if (!isLoaded) {
+    return null;
+  }
+
+  // Don't render auth buttons if user is already signed in
+  if (isSignedIn) {
+    return null;
+  }
+
   return (
     <div className="flex gap-4">
       <Dialog>
@@ -14,8 +37,9 @@ export function AuthButtons() {
           </Button>
         </DialogTrigger>
         <DialogContent>
+          <DialogTitle className="sr-only">Sign In to FlashyCards</DialogTitle>
           <SignIn 
-            forceRedirectUrl="/dashboard"
+            routing="hash"
             signUpUrl="#"
           />
         </DialogContent>
@@ -27,8 +51,9 @@ export function AuthButtons() {
           </Button>
         </DialogTrigger>
         <DialogContent>
+          <DialogTitle className="sr-only">Sign Up for FlashyCards</DialogTitle>
           <SignUp 
-            forceRedirectUrl="/dashboard"
+            routing="hash"
             signInUrl="#"
           />
         </DialogContent>

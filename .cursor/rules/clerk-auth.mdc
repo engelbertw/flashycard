@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # Clerk Authentication & Authorization Guidelines
 
 This project uses **Clerk** for all authentication and authorization. Data security is critical: **users must ONLY access their own data**.

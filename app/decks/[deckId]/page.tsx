@@ -4,6 +4,11 @@ import { getUserDeckWithCards } from "@/db/queries/decks";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { AddCardDialog } from "@/components/add-card-dialog";
+import { EditDeckDialog } from "@/components/edit-deck-dialog";
+import { DeleteDeckDialog } from "@/components/delete-deck-dialog";
+import { Flashcard } from "@/components/flashcard";
+import { Play, Settings, Trash } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ deckId: string }>;
@@ -34,33 +39,65 @@ export default async function DeckPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        {/* Navigation */}
+        <Link href="/dashboard">
+          <Button variant="ghost" className="mb-4">
+            ← Back to Dashboard
+          </Button>
+        </Link>
+
         {/* Deck Header */}
         <div className="mb-8">
-          <Link href="/dashboard">
-            <Button variant="ghost" className="mb-4">
-              ← Back to Dashboard
-            </Button>
-          </Link>
           <Card>
             <CardHeader>
-              <CardTitle className="text-4xl">{deck.name}</CardTitle>
-              {deck.description && (
-                <CardDescription className="text-lg">
-                  {deck.description}
-                </CardDescription>
-              )}
-              <CardDescription>
-                {cards.length} {cards.length === 1 ? 'card' : 'cards'}
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-4xl mb-2">{deck.name}</CardTitle>
+                  {deck.description && (
+                    <CardDescription className="text-lg mb-2">
+                      {deck.description}
+                    </CardDescription>
+                  )}
+                  <CardDescription>
+                    {cards.length} {cards.length === 1 ? 'card' : 'cards'}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <EditDeckDialog
+                    deck={deck}
+                    trigger={
+                      <Button variant="outline" size="icon">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <DeleteDeckDialog
+                    deckId={deck.id}
+                    trigger={
+                      <Button variant="outline" size="icon">
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
             </CardHeader>
+            {cards.length > 0 && (
+              <CardContent>
+                <Button size="lg" className="w-full sm:w-auto">
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Practice Session
+                </Button>
+              </CardContent>
+            )}
           </Card>
         </div>
 
-        {/* Cards List */}
+        {/* Cards Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold">Cards</h2>
-            <Button>+ Add Card</Button>
+            <AddCardDialog deckId={deckIdNum} />
           </div>
 
           {cards.length === 0 ? (
@@ -68,27 +105,18 @@ export default async function DeckPage({ params }: PageProps) {
               <CardContent className="py-12">
                 <div className="text-center text-muted-foreground">
                   <p className="text-lg mb-4">No cards yet</p>
-                  <p className="text-sm">Add your first card to get started</p>
+                  <p className="text-sm mb-6">Add your first card to get started</p>
+                  <AddCardDialog
+                    deckId={deckIdNum}
+                    trigger={<Button>+ Add Your First Card</Button>}
+                  />
                 </div>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {cards.map((card) => (
-                <Card key={card.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Front</CardTitle>
-                    <CardDescription className="text-base font-normal text-foreground">
-                      {card.front}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm font-semibold text-muted-foreground mb-1">
-                      Back
-                    </p>
-                    <p className="text-base">{card.back}</p>
-                  </CardContent>
-                </Card>
+                <Flashcard key={card.id} card={card} />
               ))}
             </div>
           )}

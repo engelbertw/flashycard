@@ -4,6 +4,7 @@ import { getUserDecks } from "@/db/queries/decks";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { CreateDeckDialog } from "@/components/create-deck-dialog";
 
 export default async function DecksPage() {
   const { userId } = await auth();
@@ -31,7 +32,10 @@ export default async function DecksPage() {
                 Manage your flashcard decks
               </p>
             </div>
-            <Button size="lg">+ Create Deck</Button>
+            <CreateDeckDialog
+              trigger={<Button size="lg">+ Create Deck</Button>}
+              redirectAfterCreate={true}
+            />
           </div>
         </div>
 
@@ -42,7 +46,10 @@ export default async function DecksPage() {
               <div className="text-center text-muted-foreground">
                 <p className="text-lg mb-4">No decks yet</p>
                 <p className="text-sm mb-6">Create your first deck to get started</p>
-                <Button>+ Create Your First Deck</Button>
+                <CreateDeckDialog
+                  trigger={<Button>+ Create Your First Deck</Button>}
+                  redirectAfterCreate={true}
+                />
               </div>
             </CardContent>
           </Card>
