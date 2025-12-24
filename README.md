@@ -20,9 +20,9 @@ A modern flashcard application with **AI-powered card generation** using either 
    - The app will automatically download Gemma3 model when you first run it
 
 2. **Setup Environment**:
-   - Create `.env` file with required variables
-   - Add your Clerk credentials
-   - Add your database URL
+   - Copy `.env.example` to `.env.local`
+   - Add your Clerk credentials (from https://dashboard.clerk.com)
+   - Add your Neon database URL (see [NEON_SETUP.md](./NEON_SETUP.md))
    - (Optional) Add Cptain AI credentials for cloud AI features
 
 ### Installation
@@ -122,15 +122,26 @@ Detailed instructions: [OLLAMA_SETUP.md](./OLLAMA_SETUP.md)
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
-- **Database:** Neon (PostgreSQL)
+- **Database:** Neon (PostgreSQL) - [Setup Guide](./NEON_SETUP.md)
 - **ORM:** Drizzle
 - **Authentication:** Clerk
 - **UI:** shadcn/ui + Tailwind CSS
 - **AI:** 
   - Gemma3 270M via Ollama (local, free)
   - Cptain AI (cloud, optional)
+
+## 🗄️ Database Setup
+
+This app uses **Neon PostgreSQL** for data storage. See [NEON_SETUP.md](./NEON_SETUP.md) for detailed setup instructions.
+
+**Quick setup:**
+1. Create a Neon account at https://neon.tech
+2. Create a new project
+3. Copy the connection string
+4. Add to `.env.local`: `DATABASE_URL=postgresql://...?sslmode=require`
+5. Run `npm run db:push` to create tables
 
 ## 📁 Project Structure
 

@@ -304,7 +304,14 @@ export async function updateChallengeResult(
   const isChallenger = challenge.challengerId === userId;
   
   // Update appropriate score
-  const updateData = isChallenger
+  const updateData: {
+    challengerScore?: number;
+    challengerSessionId?: number;
+    challengedScore?: number;
+    challengedSessionId?: number;
+    status?: string;
+    completedAt?: Date;
+  } = isChallenger
     ? { challengerScore: score, challengerSessionId: sessionId }
     : { challengedScore: score, challengedSessionId: sessionId };
   

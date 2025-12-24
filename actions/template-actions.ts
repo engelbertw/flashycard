@@ -55,33 +55,33 @@ export async function generateSmartTemplates() {
     
     // Simple pattern detection (can be enhanced with AI later)
     const patterns = {
-      hasLanguage: descriptions.some(d => 
+      hasLanguage: descriptions.some(d => d && (
         d.toLowerCase().includes('english') || 
         d.toLowerCase().includes('dutch') || 
         d.toLowerCase().includes('spanish') ||
         d.toLowerCase().includes('french') ||
         d.toLowerCase().includes('german')
-      ),
-      hasGeography: descriptions.some(d => 
+      )),
+      hasGeography: descriptions.some(d => d && (
         d.toLowerCase().includes('capital') || 
         d.toLowerCase().includes('country') || 
         d.toLowerCase().includes('city')
-      ),
-      hasScience: descriptions.some(d => 
+      )),
+      hasScience: descriptions.some(d => d && (
         d.toLowerCase().includes('science') || 
         d.toLowerCase().includes('biology') || 
         d.toLowerCase().includes('chemistry')
-      ),
-      hasBooks: descriptions.some(d => 
+      )),
+      hasBooks: descriptions.some(d => d && (
         d.toLowerCase().includes('book') || 
         d.toLowerCase().includes('author') || 
         d.toLowerCase().includes('literature')
-      ),
-      hasMovies: descriptions.some(d => 
+      )),
+      hasMovies: descriptions.some(d => d && (
         d.toLowerCase().includes('movie') || 
         d.toLowerCase().includes('film') || 
         d.toLowerCase().includes('director')
-      ),
+      )),
     };
 
     const suggestions = [];

@@ -173,7 +173,12 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
         
         // Get leaderboard rank if available
         if (result.success && result.data?.rank) {
-          setLeaderboardRank(result.data.rank);
+          const rankData = result.data.rank;
+          setLeaderboardRank({
+            rank: rankData.rank ?? null,
+            total: rankData.totalUsers ?? 0,
+            score: rankData.userScore ?? null,
+          });
         }
       } catch (error) {
         console.error('Failed to save session:', error);
