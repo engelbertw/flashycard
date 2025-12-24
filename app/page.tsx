@@ -17,7 +17,7 @@ export default async function Home() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-6xl font-bold tracking-tight">
-              FlashyCardy
+              FlashyCards
             </CardTitle>
             <CardDescription className="text-xl">
               Your personal flashcard platform

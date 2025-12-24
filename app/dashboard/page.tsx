@@ -73,7 +73,7 @@ export default async function Dashboard() {
           <CardHeader>
             <CardTitle className="text-4xl">Dashboard</CardTitle>
             <CardDescription className="text-lg">
-              Welcome to your FlashyCardy dashboard
+              Welcome to your FlashyCards dashboard
             </CardDescription>
           </CardHeader>
         </Card>
