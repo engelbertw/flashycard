@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { createDeckAction } from '@/actions/deck-actions';
-import { generateCardsWithAI, generateCardsWithCptainAI } from '@/actions/ai-actions';
+import { generateCardsWithCptainAI } from '@/actions/ai-actions';
 import { getRecentDeckTemplates, generateSmartTemplates } from '@/actions/template-actions';
 import { normalizeCardText } from '@/lib/text-utils';
 import {
@@ -18,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Loader2, Cpu } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 
 interface CreateDeckDialogProps {
   trigger?: React.ReactNode;
@@ -30,7 +31,7 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [cardCount, setCardCount] = useState(10); // Optimized for Gemma3 270M model
+  const [cardCount, setCardCount] = useState(10);
   const [cardsText, setCardsText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,7 +44,8 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
   const [recentTemplates, setRecentTemplates] = useState<any[]>([]);
   const [smartTemplates, setSmartTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [aiProvider, setAiProvider] = useState<'gemma3' | 'cptain'>('gemma3');
+  // Only use Cptain AI (sovereign cloud) - local option removed
+  const aiProvider: 'cptain' = 'cptain';
 
   // Template suggestions with topics
   const descriptionTemplates = [
@@ -265,17 +267,26 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
       return;
     }
 
-    // Choose which AI provider to use
-    const result = aiProvider === 'cptain'
-      ? await generateCardsWithCptainAI(description, cardCount)
-      : await generateCardsWithAI(description, cardCount);
+    // Use Cptain AI (sovereign cloud) only
+    const result = await generateCardsWithCptainAI(description, cardCount);
 
     if (result.success && result.data) {
       // Convert parsed cards back to text format for the textarea
-      const cardsText = result.data.cards
+      const newCardsText = result.data.cards
         .map((card: { front: string; back: string }) => `${card.front} | ${card.back}`)
         .join('\n');
-      setCardsText(cardsText);
+      
+      // Append to existing cards if there are any, otherwise replace
+      const existingCards = cardsText.trim();
+      if (existingCards) {
+        setCardsText(`${existingCards}\n${newCardsText}`);
+      } else {
+        setCardsText(newCardsText);
+      }
+      
+      // Calculate total cards after appending
+      const totalCardsAfter = parseCards(existingCards ? `${existingCards}\n${newCardsText}` : newCardsText).length;
+      const existingCount = existingCards ? parseCards(existingCards).length : 0;
       
       // Show warning if the count doesn't match
       if (result.data.warning) {
@@ -288,15 +299,14 @@ export function CreateDeckDialog({ trigger, redirectAfterCreate = false }: Creat
 • Try ${Math.ceil(cardCount / 2)} cards instead of ${cardCount}
 • Be more specific: "${description} - common words"
 • Generate multiple smaller batches
-• The Gemma3 270M model is small - larger models work better for big requests
 
-You can still create the deck with these ${result.data.count} cards, or try generating again.`);
+You now have ${totalCardsAfter} total cards. You can generate more to add to them!`);
       } else if (result.data.count < cardCount) {
-        setWarning(`⚠️ Generated ${result.data.count} out of ${cardCount} requested cards. This is normal for the small Gemma3 model. You can generate again to add more!`);
+        setWarning(`⚠️ Generated ${result.data.count} out of ${cardCount} requested cards. ${existingCount > 0 ? `Added to your existing ${existingCount} cards. ` : ''}You now have ${totalCardsAfter} total cards. Click "Generate" again to add more!`);
       } else if (result.data.count === cardCount) {
-        setWarning(`✓ Successfully generated ${result.data.count} cards!`);
+        setWarning(`✓ Successfully generated ${result.data.count} cards! ${existingCount > 0 ? `Added to your existing ${existingCount} cards. ` : ''}You now have ${totalCardsAfter} total cards.`);
       } else {
-        setWarning(`✓ Generated ${result.data.count} cards (requested ${cardCount})!`);
+        setWarning(`✓ Generated ${result.data.count} cards (requested ${cardCount})! ${existingCount > 0 ? `Added to your existing ${existingCount} cards. ` : ''}You now have ${totalCardsAfter} total cards.`);
       }
     } else {
       let errorMsg = result.error || 'Failed to generate cards';
@@ -372,7 +382,6 @@ You can still create the deck with these ${result.data.count} cards, or try gene
       setDifficultyLevel('beginner');
       setRecentTemplates([]);
       setSmartTemplates([]);
-      setAiProvider('gemma3');
     }
   };
 
@@ -387,7 +396,7 @@ You can still create the deck with these ${result.data.count} cards, or try gene
         <DialogHeader>
           <DialogTitle>Create New Deck with Cards</DialogTitle>
           <DialogDescription>
-            Let local Gemma3 AI generate cards for you, or paste your own in the format <code className="text-xs bg-muted px-1 py-0.5 rounded">Front | Back</code>
+            Let Cptain AI generate cards for you (privacy and secure by design), or paste your own in the format <code className="text-xs bg-muted px-1 py-0.5 rounded">Front | Back</code>
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -573,44 +582,8 @@ You can still create the deck with these ${result.data.count} cards, or try gene
               placeholder="e.g., 10"
             />
             <p className="text-xs text-muted-foreground">
-              {aiProvider === 'gemma3' 
-                ? '⚡ Best results: 5-10 cards per generation. The small Gemma3 270M model works better with smaller batches.'
-                : '☁️ Cptain AI can handle larger batches (up to 100 cards) with better quality.'}
+              ☁️ Cptain AI (Sovereign Cloud) can handle larger batches (up to 100 cards) with better quality. Privacy and secure by design.
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>AI Provider</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={aiProvider === 'gemma3' ? "default" : "outline"}
-                size="sm"
-                className="flex-1 h-auto py-3"
-                onClick={() => setAiProvider('gemma3')}
-                disabled={isLoading || isGenerating}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <Cpu className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Gemma3 (Local)</span>
-                  <span className="text-[10px] text-muted-foreground">Free, Private, Offline</span>
-                </div>
-              </Button>
-              <Button
-                type="button"
-                variant={aiProvider === 'cptain' ? "default" : "outline"}
-                size="sm"
-                className="flex-1 h-auto py-3"
-                onClick={() => setAiProvider('cptain')}
-                disabled={isLoading || isGenerating}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Cptain AI (Cloud)</span>
-                  <span className="text-[10px] text-muted-foreground">Better Quality</span>
-                </div>
-              </Button>
-            </div>
           </div>
 
           <div className="flex gap-2">
@@ -624,20 +597,29 @@ You can still create the deck with these ${result.data.count} cards, or try gene
               {isGenerating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating with {aiProvider === 'cptain' ? 'Cptain AI' : 'Gemma3'}...
+                  Generating with Cptain AI...
                 </>
               ) : (
                 <>
-                  {aiProvider === 'cptain' ? <Sparkles className="mr-2 h-4 w-4" /> : <Cpu className="mr-2 h-4 w-4" />}
-                  Generate {cardCount} Card{cardCount !== 1 ? 's' : ''} with {aiProvider === 'cptain' ? 'Cptain AI' : 'Gemma3'}
+                  <div className="relative w-8 h-8 mr-2 flex items-center justify-center flex-shrink-0">
+                    <Image
+                      src="/cptain.svg"
+                      alt="C'PTAIN Logo"
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                  {parsedCards.length > 0 
+                    ? `Generate ${cardCount} More Card${cardCount !== 1 ? 's' : ''} (Add to ${parsedCards.length} existing)`
+                    : `Generate ${cardCount} Card${cardCount !== 1 ? 's' : ''} with Cptain AI (Sovereign Cloud) - Privacy and Secure by Design`}
                 </>
               )}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            {aiProvider === 'gemma3'
-              ? '🖥️ Uses Gemma3 AI running locally on your computer (free, private, offline)'
-              : '☁️ Uses Cptain AI cloud service for higher quality card generation'}
+            ☁️ Uses Cptain AI sovereign cloud service for higher quality card generation. Privacy and secure by design.
           </p>
           
           <div className="space-y-2">

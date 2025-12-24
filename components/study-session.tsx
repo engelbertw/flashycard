@@ -36,7 +36,8 @@ export function StudySession({ cards, deckId }: StudySessionProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [studyCards, setStudyCards] = useState(cards);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [studyMode, setStudyMode] = useState<'flip' | 'test'>('flip');
+  // Default to 'test' mode if there are at least 4 cards, otherwise 'flip'
+  const [studyMode, setStudyMode] = useState<'flip' | 'test'>(cards.length >= 4 ? 'test' : 'flip');
   const [userAnswer, setUserAnswer] = useState('');
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
